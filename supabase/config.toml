@@ -1,0 +1,16 @@
+project_id = "document-delight"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+# La extensión del IDE se autentica con un token personal, no con un JWT de Supabase.
+[functions.heartbeat]
+verify_jwt = false
+
+[functions.issue-invoice]
+verify_jwt = true
+
+# Stripe firma sus webhooks; la firma se verifica dentro de la función.
+[functions.stripe-webhook]
+verify_jwt = false

@@ -10,31 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ClientsRouteImport } from './routes/clients'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as InvoicesRouteImport } from './routes/invoices'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as MyTimeRouteImport } from './routes/my-time'
-import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as AuthedClientsRouteImport } from './routes/_authed/clients'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedInvoicesRouteImport } from './routes/_authed/invoices'
+import { Route as AuthedMyTimeRouteImport } from './routes/_authed/my-time'
+import { Route as AuthedProjectsRouteImport } from './routes/_authed/projects'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClientsRoute = ClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InvoicesRoute = InvoicesRouteImport.update({
-  id: '/invoices',
-  path: '/invoices',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -42,83 +32,96 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MyTimeRoute = MyTimeRouteImport.update({
+const AuthedClientsRoute = AuthedClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedInvoicesRoute = AuthedInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedMyTimeRoute = AuthedMyTimeRouteImport.update({
   id: '/my-time',
   path: '/my-time',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const ProjectsRoute = ProjectsRouteImport.update({
+const AuthedProjectsRoute = AuthedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/clients': typeof ClientsRoute
-  '/dashboard': typeof DashboardRoute
-  '/invoices': typeof InvoicesRoute
   '/login': typeof LoginRoute
-  '/my-time': typeof MyTimeRoute
-  '/projects': typeof ProjectsRoute
+  '/clients': typeof AuthedClientsRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/invoices': typeof AuthedInvoicesRoute
+  '/my-time': typeof AuthedMyTimeRoute
+  '/projects': typeof AuthedProjectsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/clients': typeof ClientsRoute
-  '/dashboard': typeof DashboardRoute
-  '/invoices': typeof InvoicesRoute
   '/login': typeof LoginRoute
-  '/my-time': typeof MyTimeRoute
-  '/projects': typeof ProjectsRoute
+  '/clients': typeof AuthedClientsRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/invoices': typeof AuthedInvoicesRoute
+  '/my-time': typeof AuthedMyTimeRoute
+  '/projects': typeof AuthedProjectsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/clients': typeof ClientsRoute
-  '/dashboard': typeof DashboardRoute
-  '/invoices': typeof InvoicesRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
-  '/my-time': typeof MyTimeRoute
-  '/projects': typeof ProjectsRoute
+  '/_authed/clients': typeof AuthedClientsRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/invoices': typeof AuthedInvoicesRoute
+  '/_authed/my-time': typeof AuthedMyTimeRoute
+  '/_authed/projects': typeof AuthedProjectsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/clients'
     | '/dashboard'
     | '/invoices'
-    | '/login'
     | '/my-time'
     | '/projects'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/clients'
     | '/dashboard'
     | '/invoices'
-    | '/login'
     | '/my-time'
     | '/projects'
   id:
     | '__root__'
     | '/'
-    | '/clients'
-    | '/dashboard'
-    | '/invoices'
+    | '/_authed'
     | '/login'
-    | '/my-time'
-    | '/projects'
+    | '/_authed/clients'
+    | '/_authed/dashboard'
+    | '/_authed/invoices'
+    | '/_authed/my-time'
+    | '/_authed/projects'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ClientsRoute: typeof ClientsRoute
-  DashboardRoute: typeof DashboardRoute
-  InvoicesRoute: typeof InvoicesRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
-  MyTimeRoute: typeof MyTimeRoute
-  ProjectsRoute: typeof ProjectsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -130,25 +133,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clients': {
-      id: '/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof ClientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invoices': {
-      id: '/invoices'
-      path: '/invoices'
-      fullPath: '/invoices'
-      preLoaderRoute: typeof InvoicesRouteImport
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -158,31 +147,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/my-time': {
-      id: '/my-time'
+    '/_authed/clients': {
+      id: '/_authed/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AuthedClientsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/invoices': {
+      id: '/_authed/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AuthedInvoicesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/my-time': {
+      id: '/_authed/my-time'
       path: '/my-time'
       fullPath: '/my-time'
-      preLoaderRoute: typeof MyTimeRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedMyTimeRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/projects': {
-      id: '/projects'
+    '/_authed/projects': {
+      id: '/_authed/projects'
       path: '/projects'
       fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedProjectsRouteImport
+      parentRoute: typeof AuthedRoute
     }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedClientsRoute: typeof AuthedClientsRoute
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedInvoicesRoute: typeof AuthedInvoicesRoute
+  AuthedMyTimeRoute: typeof AuthedMyTimeRoute
+  AuthedProjectsRoute: typeof AuthedProjectsRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedClientsRoute: AuthedClientsRoute,
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedInvoicesRoute: AuthedInvoicesRoute,
+  AuthedMyTimeRoute: AuthedMyTimeRoute,
+  AuthedProjectsRoute: AuthedProjectsRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ClientsRoute: ClientsRoute,
-  DashboardRoute: DashboardRoute,
-  InvoicesRoute: InvoicesRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
-  MyTimeRoute: MyTimeRoute,
-  ProjectsRoute: ProjectsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

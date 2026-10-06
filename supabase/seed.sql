@@ -1,15 +1,19 @@
 -- =============================================================================
--- Datos de ejemplo (coinciden con los datos fijos del frontend actual).
+-- Datos de ejemplo (coinciden con los datos fijos del frontend original).
 -- Solo para desarrollo local. Los usuarios se crean desde Supabase Auth;
 -- por eso aquí no hay profiles ni time_entries.
 -- =============================================================================
 
-insert into public.clients (id, name, tax_id, currency, billing_email) values
-  ('00000000-0000-0000-0000-000000000101', 'Norte Digital', 'NDI940101H12', 'USD', 'billing@nortedigital.com'),
-  ('00000000-0000-0000-0000-000000000102', 'Grupo Andes',   'GAN880411K92', 'MXN', 'finanzas@grupoandes.mx'),
-  ('00000000-0000-0000-0000-000000000103', 'Vela Labs',     'VLA010620N35', 'USD', 'ap@velalabs.io'),
-  ('00000000-0000-0000-0000-000000000104', 'Cobalto Bank',  'CBA760902M18', 'MXN', 'cfdi@cobalto.mx'),
-  ('00000000-0000-0000-0000-000000000105', 'Lumen Health',  'LHE021114P09', 'USD', 'billing@lumen.health');
+-- Emisor de pruebas publicado por el SAT para ambientes sandbox de PAC.
+insert into public.company_settings (rfc, legal_name, tax_regime, postal_code) values
+  ('EKU9003173C9', 'ESCUELA KEMPER URGATE', '601', '42501');
+
+insert into public.clients (id, name, tax_id, currency, billing_email, tax_regime, fiscal_postal_code, cfdi_use, is_active) values
+  ('00000000-0000-0000-0000-000000000101', 'Norte Digital', 'NDI940101H12', 'USD', 'billing@nortedigital.com', null,  null,    null,  true),
+  ('00000000-0000-0000-0000-000000000102', 'Grupo Andes',   'GAN880411K92', 'MXN', 'finanzas@grupoandes.mx',   '601', '01000', 'G03', true),
+  ('00000000-0000-0000-0000-000000000103', 'Vela Labs',     'VLA010620N35', 'USD', 'ap@velalabs.io',           null,  null,    null,  true),
+  ('00000000-0000-0000-0000-000000000104', 'Cobalto Bank',  'CBA760902M18', 'MXN', 'cfdi@cobalto.mx',          '601', '06600', 'G03', false),
+  ('00000000-0000-0000-0000-000000000105', 'Lumen Health',  'LHE021114P09', 'USD', 'billing@lumen.health',     null,  null,    null,  true);
 
 insert into public.projects (name, repository_url, hourly_rate, status, client_id) values
   ('billing-core',  'github.com/nexo/billing-core',      125.00,  'Active',   '00000000-0000-0000-0000-000000000102'),

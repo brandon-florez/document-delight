@@ -1,17 +1,13 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, LockKeyhole, Mail, RadioTower } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
+import { currentProfileQuery, homeForRole } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -19,7 +15,8 @@ export const Route = createFileRoute("/login")({
       { title: "Iniciar sesión — Nexo IT·Fin" },
       {
         name: "description",
-        content: "Acceso al portal de asignación, telemetría automática y facturación de recursos IT.",
+        content:
+          "Acceso al portal de asignación, telemetría automática y facturación de recursos IT.",
       },
       { property: "og:title", content: "Iniciar sesión — Nexo IT·Fin" },
       {
@@ -35,7 +32,45 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState("Finance");
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    void queryClient.fetchQuery(currentProfileQuery).then((profile) => {
+      if (profile) void navigate({ to: homeForRole(profile.role) });
+    });
+  }, [navigate, queryClient]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setError(
+          signInError.message === "Invalid login credentials"
+            ? "Email o contraseña incorrectos."
+            : signInError.message,
+        );
+        return;
+      }
+      queryClient.removeQueries({ queryKey: currentProfileQuery.queryKey });
+      const profile = await queryClient.fetchQuery(currentProfileQuery);
+      if (!profile) {
+        setError("Tu usuario no tiene perfil en el portal. Contacta a un administrador.");
+        return;
+      }
+      await navigate({ to: homeForRole(profile.role) });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4 py-10 font-sans text-foreground">
@@ -56,12 +91,15 @@ function LoginPage() {
             </div>
 
             <div className="my-12 max-w-md">
-              <p className="font-mono text-[11px] uppercase tracking-wider text-clay">Asignación y cobro</p>
+              <p className="font-mono text-[11px] uppercase tracking-wider text-clay">
+                Asignación y cobro
+              </p>
               <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
                 Tiempo de código convertido en facturas claras.
               </h1>
               <p className="mt-4 text-sm leading-6 text-foreground/70">
-                Acceso para desarrolladores, administración y finanzas con telemetría automática por repositorio.
+                Acceso para desarrolladores, administración y finanzas con telemetría automática por
+                repositorio.
               </p>
             </div>
 
@@ -80,21 +118,16 @@ function LoginPage() {
           </section>
 
           <section className="flex items-center p-6 sm:p-10">
-            <form
-              className="w-full space-y-6"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void navigate({ to: role === "Developer" ? "/my-time" : "/dashboard" });
-              }}
-            >
+            <form className="w-full space-y-6" onSubmit={(event) => void handleSubmit(event)}>
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 font-mono text-[11px] font-medium text-accent">
-                  <RadioTower className="size-3.5" />
-                  Sesión de demostración
+                  <ShieldCheck className="size-3.5" />
+                  Acceso seguro
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight">Iniciar Sesión</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Elige un rol para ver la redirección definida en el PRD.
+                  Serás redirigido según tu rol: desarrolladores a Mi tiempo; administración y
+                  finanzas al dashboard.
                 </p>
               </div>
 
@@ -103,34 +136,59 @@ function LoginPage() {
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="email" type="email" defaultValue="ana.rios@nexo.it" className="pl-9" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="tu@empresa.com"
+                      className="pl-9"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Contraseña</Label>
                   <div className="relative">
                     <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="password" type="password" defaultValue="demo-password" className="pl-9" />
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="pl-9"
+                    />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Rol</Label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un rol" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Developer">Developer</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
-              <Button type="submit" variant="clay" size="lg" className="w-full">
+              {!isSupabaseConfigured ? (
+                <p role="alert" className="rounded-xl bg-amberc-soft px-3 py-2 text-sm">
+                  Falta configurar Supabase: completa <code>VITE_SUPABASE_URL</code> y{" "}
+                  <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> en el archivo <code>.env</code> y
+                  reinicia <code>npm run dev</code>.
+                </p>
+              ) : null}
+
+              {error ? (
+                <p role="alert" className="rounded-xl bg-rosec-soft px-3 py-2 text-sm text-rosec">
+                  {error}
+                </p>
+              ) : null}
+
+              <Button
+                type="submit"
+                variant="clay"
+                size="lg"
+                className="w-full"
+                disabled={submitting || !isSupabaseConfigured}
+              >
+                {submitting ? <Loader2 className="animate-spin" /> : null}
                 Iniciar Sesión
-                <ArrowRight />
+                {submitting ? null : <ArrowRight />}
               </Button>
             </form>
           </section>
