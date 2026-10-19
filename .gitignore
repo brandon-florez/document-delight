@@ -24,6 +24,9 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+# The IDE extension keeps its own launch config.
+!extensions/vscode/.vscode/
+!extensions/vscode/.vscode/**
 .idea
 .DS_Store
 *.suo

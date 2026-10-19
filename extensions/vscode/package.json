@@ -1,0 +1,41 @@
+{
+  "name": "nexo-itfin",
+  "displayName": "Nexo IT·Fin",
+  "description": "Mide el tiempo de programación y lo envía al portal Nexo IT·Fin.",
+  "version": "0.1.0",
+  "publisher": "nexo",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished", "onCommand:nexo.connect"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nexo.connect",
+        "title": "Nexo: conectar"
+      }
+    ],
+    "configuration": {
+      "title": "Nexo IT·Fin",
+      "properties": {
+        "nexo.heartbeatUrl": {
+          "type": "string",
+          "default": "https://hajwmgmqppxtgbbwaqmo.supabase.co/functions/v1/heartbeat",
+          "description": "Dirección de la función que recibe la actividad del editor."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.2"
+  }
+}
