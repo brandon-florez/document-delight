@@ -27,28 +27,36 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 
 ---
 
+
+
 ## 2. ¿Qué puede hacer hoy un usuario?
 
-| Pantalla | Dirección | ¿Qué se ve? | ¿Qué funciona de verdad? |
-| --- | --- | --- | --- |
-| Inicio | `/` | Nada; redirige solo al login | La redirección |
-| Iniciar sesión | `/login` | Formulario con email, contraseña y rol | Solo elegir rol y entrar (no valida nada) |
-| Dashboard ejecutivo | `/dashboard` | Indicadores de facturación, horas por repositorio, facturas y vista previa | Solo mostrar datos de ejemplo |
-| Mi tiempo | `/my-time` | Horas de la semana de un programador, gráfico por día y bitácora | Solo mostrar datos de ejemplo |
-| Clientes | `/clients` | Tabla de clientes y ventana para "Nuevo cliente" | Abrir y cerrar la ventana |
-| Proyectos | `/projects` | Tabla de proyectos y ventana para "Nuevo proyecto" | Abrir y cerrar la ventana |
-| Facturación | `/invoices` | Lista de facturas y vista previa del documento | Seleccionar una factura de la lista |
+
+| Pantalla            | Dirección    | ¿Qué se ve?                                                                | ¿Qué funciona de verdad?                  |
+| ------------------- | ------------ | -------------------------------------------------------------------------- | ----------------------------------------- |
+| Inicio              | `/`          | Nada; redirige solo al login                                               | La redirección                            |
+| Iniciar sesión      | `/login`     | Formulario con email, contraseña y rol                                     | Solo elegir rol y entrar (no valida nada) |
+| Dashboard ejecutivo | `/dashboard` | Indicadores de facturación, horas por repositorio, facturas y vista previa | Solo mostrar datos de ejemplo             |
+| Mi tiempo           | `/my-time`   | Horas de la semana de un programador, gráfico por día y bitácora           | Solo mostrar datos de ejemplo             |
+| Clientes            | `/clients`   | Tabla de clientes y ventana para "Nuevo cliente"                           | Abrir y cerrar la ventana                 |
+| Proyectos           | `/projects`  | Tabla de proyectos y ventana para "Nuevo proyecto"                         | Abrir y cerrar la ventana                 |
+| Facturación         | `/invoices`  | Lista de facturas y vista previa del documento                             | Seleccionar una factura de la lista       |
+
+
+
 
 ### Detalle de cada pantalla
 
-**Iniciar sesión (`/login`)**
+**Iniciar sesión (**`/login`**)**
+
 - Tiene email y contraseña ya rellenados (`ana.rios@nexo.it` / `demo-password`) y un selector de rol: *Developer*, *Admin* o *Finance*.
 - Al pulsar "Iniciar Sesión":
   - Si el rol es **Developer**, lleva a **Mi tiempo**.
   - Si es **Admin** o **Finance**, lleva al **Dashboard ejecutivo**.
 - No comprueba usuario ni contraseña. Es una "sesión de demostración" (así lo indica la propia pantalla).
 
-**Dashboard ejecutivo (`/dashboard`)**
+**Dashboard ejecutivo (**`/dashboard`**)**
+
 - Cuatro tarjetas con cifras: facturación en USD, facturación en MXN, horas no facturadas y clientes activos.
 - Barras con horas por repositorio (por ejemplo `api-gateway`, `billing-core`).
 - Lista de "tiempo no facturado" con botón **Generar Pre-Facturas**.
@@ -57,30 +65,37 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 - Botones **Filtrar** y **Exportar** en la cabecera.
 - Ninguno de estos botones tiene acción asignada todavía.
 
-**Mi tiempo (`/my-time`)**
+**Mi tiempo (**`/my-time`**)**
+
 - Saluda a un programador de ejemplo ("Hola, Diego") con su total semanal (39 horas).
 - Muestra su proyecto principal y la dirección de su repositorio.
 - Gráfico de barras de lunes a viernes.
 - "Time Log": tabla de solo lectura con fecha, proyecto, hora de inicio, hora de fin y total.
 
-**Clientes (`/clients`)**
+**Clientes (**`/clients`**)**
+
 - Tabla con nombre, RFC, moneda (USD/MXN), correo de facturación, estado y monto del mes.
 - Botón **Nuevo Cliente** que abre una ventana con nombre, RFC y moneda. El botón "Guardar" no guarda.
 - El buscador y los botones de paginación son solo dibujos: no filtran ni cambian de página.
 
-**Proyectos (`/projects`)**
+**Proyectos (**`/projects`**)**
+
 - Tabla con nombre, cliente, URL del repositorio, tarifa por hora, estado y horas del mes.
 - Botón **Nuevo Proyecto** con nombre, cliente, tarifa y URL de repositorio. Tampoco guarda.
 - La URL del repositorio es la pieza clave del diseño: es lo que, en el futuro, enlazará el tiempo medido automáticamente con el proyecto correcto.
 
-**Facturación (`/invoices`)**
+**Facturación (**`/invoices`**)**
+
 - A la izquierda, la lista de facturas. Al hacer clic en una, queda seleccionada y la vista previa cambia de cliente, estado, moneda, método y total.
 - Métodos de cobro mencionados: **SAT CFDI 4.0** (facturación electrónica mexicana) y **Stripe Link** (cobro con tarjeta).
 - Botones **Generar Cierre**, **Validar** y **Timbrar / Cobrar**, todos sin acción.
 
+
+
 ### Elementos comunes a las pantallas internas
 
 Todas las pantallas (menos el login) comparten un mismo "marco":
+
 - **Menú lateral** (en computadora) o **barra inferior** (en celular) para navegar entre secciones.
 - Tarjeta de "Telemetría" que indica "12 repos conectados" (texto fijo).
 - Usuario de ejemplo en la esquina: **Ana Ríos, admin · finanzas** (fijo, no cambia según quién entra).
@@ -88,21 +103,27 @@ Todas las pantallas (menos el login) comparten un mismo "marco":
 
 ---
 
+
+
 ## 3. Parte visual (Frontend)
 
 El frontend es todo lo que el usuario ve y toca en el navegador.
 
 ### Tecnologías principales
 
-| Herramienta | Para qué se usa, en palabras simples |
-| --- | --- |
-| **React 19** | La base con la que se construyen las pantallas, pieza por pieza. |
-| **TypeScript** | El lenguaje de programación. Es JavaScript con "reglas extra" que ayudan a evitar errores. |
-| **TanStack Router** | Decide qué pantalla mostrar según la dirección (`/login`, `/clients`, etc.). |
-| **Tailwind CSS 4** | Da estilo (colores, tamaños, espacios) escribiendo clases cortas directamente en el código. |
+
+| Herramienta              | Para qué se usa, en palabras simples                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| **React 19**             | La base con la que se construyen las pantallas, pieza por pieza.                            |
+| **TypeScript**           | El lenguaje de programación. Es JavaScript con "reglas extra" que ayudan a evitar errores.  |
+| **TanStack Router**      | Decide qué pantalla mostrar según la dirección (`/login`, `/clients`, etc.).                |
+| **Tailwind CSS 4**       | Da estilo (colores, tamaños, espacios) escribiendo clases cortas directamente en el código. |
 | **shadcn/ui + Radix UI** | Un catálogo de piezas visuales ya hechas: botones, ventanas emergentes, selectores, tablas… |
-| **Lucide** | La colección de iconos (reloj, carpeta, factura, etc.). |
-| **Google Fonts** | Tipografías *Inter* (texto normal) y *JetBrains Mono* (números y datos). |
+| **Lucide**               | La colección de iconos (reloj, carpeta, factura, etc.).                                     |
+| **Google Fonts**         | Tipografías *Inter* (texto normal) y *JetBrains Mono* (números y datos).                    |
+
+
+
 
 ### Diseño visual
 
@@ -112,6 +133,8 @@ El frontend es todo lo que el usuario ve y toca en el navegador.
 - Existe un **modo oscuro definido a medias** en los estilos, pero no hay forma de activarlo y no incluye todos los colores propios del portal.
 
 ---
+
+
 
 ## 4. Parte del servidor (Backend)
 
@@ -135,7 +158,11 @@ También está instalado **TanStack Query** (herramienta para pedir y guardar da
 
 ---
 
+
+
 ## 5. Arquitectura (cómo está organizado por dentro)
+
+
 
 ### Vista general
 
@@ -165,14 +192,18 @@ También está instalado **TanStack Query** (herramienta para pedir y guardar da
  └─────────────────────────────┘
 ```
 
+
+
 ### Ideas clave de la arquitectura
 
-- **Cada archivo dentro de `src/routes/` es una página.** El nombre del archivo es la dirección web: `clients.tsx` → `/clients`. Esto se llama *enrutamiento por archivos*.
-- **Un marco compartido (`PortalShell`)** evita repetir el menú y la cabecera en cada página.
+- **Cada archivo dentro de** `src/routes/` **es una página.** El nombre del archivo es la dirección web: `clients.tsx` → `/clients`. Esto se llama *enrutamiento por archivos*.
+- **Un marco compartido (**`PortalShell`**)** evita repetir el menú y la cabecera en cada página.
 - **Piezas reutilizables** en `src/components/ui/` para que todo se vea coherente.
 - **Los datos viven dentro de cada página** como listas fijas. Cuando exista un backend, estas listas se sustituirán por datos reales.
 
 ---
+
+
 
 ## 6. Estructura de archivos
 
@@ -223,107 +254,143 @@ document-delight/
 
 ---
 
+
+
 ## 7. Funciones y piezas principales
+
+
 
 ### Piezas propias del portal (`src/components/portal/PortalShell.tsx`)
 
-| Pieza | Qué hace |
-| --- | --- |
-| `PortalShell` | El marco de todas las páginas internas: menú lateral, barra inferior en celular, cabecera con título, subtítulo, botones extra y "cerrar sesión". Recibe cuál sección está activa para resaltarla. |
-| `KpiCard` | Tarjeta de indicador: una etiqueta, un número grande y un detalle de color (verde, ámbar o gris). |
-| `Panel` | Caja blanca con bordes redondeados donde se agrupa contenido. |
-| `SectionTitle` | Título de sección con subtítulo opcional. |
-| `StatusDot` | Puntito de color para indicar estado (activo, en pausa, inactivo). |
-| `LiveSyncPill` | Etiqueta verde "Auto-sync" con icono de wifi. |
-| `SearchField` | Caja de búsqueda decorativa. **Definida pero no usada** en ninguna página. |
+
+| Pieza          | Qué hace                                                                                                                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PortalShell`  | El marco de todas las páginas internas: menú lateral, barra inferior en celular, cabecera con título, subtítulo, botones extra y "cerrar sesión". Recibe cuál sección está activa para resaltarla. |
+| `KpiCard`      | Tarjeta de indicador: una etiqueta, un número grande y un detalle de color (verde, ámbar o gris).                                                                                                  |
+| `Panel`        | Caja blanca con bordes redondeados donde se agrupa contenido.                                                                                                                                      |
+| `SectionTitle` | Título de sección con subtítulo opcional.                                                                                                                                                          |
+| `StatusDot`    | Puntito de color para indicar estado (activo, en pausa, inactivo).                                                                                                                                 |
+| `LiveSyncPill` | Etiqueta verde "Auto-sync" con icono de wifi.                                                                                                                                                      |
+| `SearchField`  | Caja de búsqueda decorativa. **Definida pero no usada** en ninguna página.                                                                                                                         |
+
+
+
 
 ### Funciones de cada página
 
-| Archivo | Función principal | Comportamiento |
-| --- | --- | --- |
-| `index.tsx` | `Index` | Redirige a `/login`. |
-| `login.tsx` | `LoginPage` | Guarda el rol elegido y, al enviar, redirige según ese rol. |
-| `dashboard.tsx` | `DashboardPage` | Pinta indicadores, barras, tabla y vista previa con datos fijos. |
-| `my-time.tsx` | `MyTimePage` | Pinta resumen semanal, gráfico y bitácora con datos fijos. |
-| `clients.tsx` | `ClientsPage` | Pinta la tabla de clientes y la ventana "Nuevo cliente". |
-| `projects.tsx` | `ProjectsPage` | Pinta la tabla de proyectos y la ventana "Nuevo proyecto". |
-| `invoices.tsx` | `InvoicesPage` | Recuerda qué factura está seleccionada y actualiza la vista previa. |
-| `invoices.tsx` | `StatusBadge` | Etiqueta de color según el estado de la factura. |
-| `__root.tsx` | `RootShell`, `RootComponent` | Arman el HTML base y conectan el sistema de datos. |
-| `__root.tsx` | `NotFoundComponent` | Página "404 – no encontrada". |
-| `__root.tsx` | `ErrorComponent` | Página de error con botón "Try again". |
+
+| Archivo         | Función principal            | Comportamiento                                                      |
+| --------------- | ---------------------------- | ------------------------------------------------------------------- |
+| `index.tsx`     | `Index`                      | Redirige a `/login`.                                                |
+| `login.tsx`     | `LoginPage`                  | Guarda el rol elegido y, al enviar, redirige según ese rol.         |
+| `dashboard.tsx` | `DashboardPage`              | Pinta indicadores, barras, tabla y vista previa con datos fijos.    |
+| `my-time.tsx`   | `MyTimePage`                 | Pinta resumen semanal, gráfico y bitácora con datos fijos.          |
+| `clients.tsx`   | `ClientsPage`                | Pinta la tabla de clientes y la ventana "Nuevo cliente".            |
+| `projects.tsx`  | `ProjectsPage`               | Pinta la tabla de proyectos y la ventana "Nuevo proyecto".          |
+| `invoices.tsx`  | `InvoicesPage`               | Recuerda qué factura está seleccionada y actualiza la vista previa. |
+| `invoices.tsx`  | `StatusBadge`                | Etiqueta de color según el estado de la factura.                    |
+| `__root.tsx`    | `RootShell`, `RootComponent` | Arman el HTML base y conectan el sistema de datos.                  |
+| `__root.tsx`    | `NotFoundComponent`          | Página "404 – no encontrada".                                       |
+| `__root.tsx`    | `ErrorComponent`             | Página de error con botón "Try again".                              |
+
+
+
 
 ### Funciones de apoyo (`src/lib/` y `src/hooks/`)
 
-| Función | Qué hace |
-| --- | --- |
-| `cn()` | Junta varias clases de estilo y resuelve conflictos entre ellas. |
-| `useIsMobile()` | Responde "sí/no" a "¿la pantalla mide menos de 768 píxeles?". |
-| `renderErrorPage()` | Devuelve la página HTML de "algo salió mal". |
-| `describeError()` | Convierte un error en un texto detallado (mensaje, origen y causas). |
+
+| Función                      | Qué hace                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| `cn()`                       | Junta varias clases de estilo y resuelve conflictos entre ellas.          |
+| `useIsMobile()`              | Responde "sí/no" a "¿la pantalla mide menos de 768 píxeles?".             |
+| `renderErrorPage()`          | Devuelve la página HTML de "algo salió mal".                              |
+| `describeError()`            | Convierte un error en un texto detallado (mensaje, origen y causas).      |
 | `consumeLastCapturedError()` | Entrega el último error registrado (si ocurrió hace menos de 5 segundos). |
-| `reportLovableError()` | Avisa al editor de Lovable cuando una página falla. |
-| `getRouter()` | Crea el sistema de navegación entre páginas. |
+| `reportLovableError()`       | Avisa al editor de Lovable cuando una página falla.                       |
+| `getRouter()`                | Crea el sistema de navegación entre páginas.                              |
+
+
+
 
 ### Componentes genéricos (`src/components/ui/`)
 
 Hay **48** piezas listas para usar, pero **solo 5 se usan hoy**: botón (`button`), campo de texto (`input`), etiqueta (`label`), selector desplegable (`select`) y ventana emergente (`dialog`).
 
-El botón tiene un estilo propio del proyecto llamado **`clay`** (azul con sombra), que es el que se usa en las acciones principales.
+El botón tiene un estilo propio del proyecto llamado `clay` (azul con sombra), que es el que se usa en las acciones principales.
 
 ---
 
+
+
 ## 8. Librerías instaladas
+
+
 
 ### Se usan actualmente
 
-| Librería | Uso |
-| --- | --- |
-| `react`, `react-dom` | Base de las pantallas. |
-| `@tanstack/react-router`, `@tanstack/react-start` | Páginas, navegación y servidor. |
-| `@tanstack/react-query` | Conectado, pero sin consultas todavía. |
-| `tailwindcss`, `tw-animate-css` | Estilos y animaciones. |
-| `@radix-ui/*` (select, dialog, label, slot…) | Comportamiento accesible de ventanas y selectores. |
-| `class-variance-authority`, `clsx`, `tailwind-merge` | Manejo de variantes y combinación de estilos. |
-| `lucide-react` | Iconos. |
+
+| Librería                                             | Uso                                                |
+| ---------------------------------------------------- | -------------------------------------------------- |
+| `react`, `react-dom`                                 | Base de las pantallas.                             |
+| `@tanstack/react-router`, `@tanstack/react-start`    | Páginas, navegación y servidor.                    |
+| `@tanstack/react-query`                              | Conectado, pero sin consultas todavía.             |
+| `tailwindcss`, `tw-animate-css`                      | Estilos y animaciones.                             |
+| `@radix-ui/*` (select, dialog, label, slot…)         | Comportamiento accesible de ventanas y selectores. |
+| `class-variance-authority`, `clsx`, `tailwind-merge` | Manejo de variantes y combinación de estilos.      |
+| `lucide-react`                                       | Iconos.                                            |
+
+
+
 
 ### Instaladas, pero sin uso real en las páginas
 
 Vienen con la plantilla y estarán disponibles cuando se necesiten:
 
-| Librería | Para qué serviría |
-| --- | --- |
+
+| Librería                                        | Para qué serviría                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
 | `react-hook-form`, `zod`, `@hookform/resolvers` | Formularios con validación (por ejemplo, comprobar que el RFC sea válido). |
-| `recharts` | Gráficos reales (hoy las barras están dibujadas a mano). |
-| `date-fns`, `react-day-picker` | Manejo de fechas y calendarios. |
-| `sonner` | Avisos emergentes ("Cliente guardado"). |
-| `cmdk` | Buscador tipo "paleta de comandos". |
-| `embla-carousel-react` | Carruseles. |
-| `vaul` | Paneles deslizantes en celular. |
-| `input-otp` | Campos para códigos de verificación. |
-| `react-resizable-panels` | Paneles que se pueden redimensionar. |
+| `recharts`                                      | Gráficos reales (hoy las barras están dibujadas a mano).                   |
+| `date-fns`, `react-day-picker`                  | Manejo de fechas y calendarios.                                            |
+| `sonner`                                        | Avisos emergentes ("Cliente guardado").                                    |
+| `cmdk`                                          | Buscador tipo "paleta de comandos".                                        |
+| `embla-carousel-react`                          | Carruseles.                                                                |
+| `vaul`                                          | Paneles deslizantes en celular.                                            |
+| `input-otp`                                     | Campos para códigos de verificación.                                       |
+| `react-resizable-panels`                        | Paneles que se pueden redimensionar.                                       |
+
+
+
 
 ### Herramientas de desarrollo
 
-| Herramienta | Para qué sirve |
-| --- | --- |
-| **Vite 8** | Arranca la app en modo desarrollo y la empaqueta para publicar. |
+
+| Herramienta                           | Para qué sirve                                                             |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| **Vite 8**                            | Arranca la app en modo desarrollo y la empaqueta para publicar.            |
 | **@lovable.dev/vite-tanstack-config** | Configuración preparada por Lovable que ya incluye casi todo lo necesario. |
-| **ESLint** | Revisa el código en busca de errores comunes. |
-| **Prettier** | Ordena el formato del código automáticamente. |
-| **Nitro** | Prepara la versión final para publicarse en la nube. |
+| **ESLint**                            | Revisa el código en busca de errores comunes.                              |
+| **Prettier**                          | Ordena el formato del código automáticamente.                              |
+| **Nitro**                             | Prepara la versión final para publicarse en la nube.                       |
+
+
+
 
 ### Comandos disponibles
 
-| Comando | Qué hace |
-| --- | --- |
-| `npm run dev` | Arranca la app en modo desarrollo. |
-| `npm run build` | Crea la versión final para publicar. |
+
+| Comando           | Qué hace                               |
+| ----------------- | -------------------------------------- |
+| `npm run dev`     | Arranca la app en modo desarrollo.     |
+| `npm run build`   | Crea la versión final para publicar.   |
 | `npm run preview` | Muestra cómo se verá la versión final. |
-| `npm run lint` | Revisa el código. |
-| `npm run format` | Da formato al código. |
+| `npm run lint`    | Revisa el código.                      |
+| `npm run format`  | Da formato al código.                  |
+
 
 ---
+
+
 
 ## 9. Observaciones y detalles a corregir
 
@@ -341,6 +408,8 @@ Cosas encontradas durante el análisis que conviene tener en cuenta:
 
 ---
 
+
+
 ## 10. ¿Qué falta para que sea un sistema funcional?
 
 En orden aproximado de prioridad:
@@ -357,21 +426,26 @@ En orden aproximado de prioridad:
 
 ---
 
+
+
 ## 11. Glosario
 
-| Término | Significado sencillo |
-| --- | --- |
-| **Frontend** | Lo que el usuario ve y usa en el navegador. |
-| **Backend** | La parte "trasera" que guarda datos, aplica reglas y habla con otros servicios. |
-| **Componente** | Una pieza reutilizable de la pantalla (un botón, una tarjeta, una tabla). |
-| **Ruta** | Una dirección dentro de la app, como `/clients`. |
-| **Telemetría** | Medición automática de actividad; aquí, del tiempo que el programador pasa en cada proyecto. |
-| **Heartbeat** | "Latido": una pequeña señal periódica que dice "sigo trabajando". |
-| **Repositorio** | Carpeta en la nube (por ejemplo, en GitHub) donde vive el código de un proyecto. |
-| **KPI** | Indicador clave; una cifra importante para el negocio. |
-| **Pre-factura** | Borrador de factura antes de emitirla oficialmente. |
-| **Timbrar / CFDI** | En México, validar una factura electrónica ante el SAT para que tenga validez fiscal. |
-| **Stripe** | Plataforma para cobrar con tarjeta por internet. |
-| **RFC** | Registro Federal de Contribuyentes; identificador fiscal en México. |
-| **CSRF** | Tipo de ataque donde otra página intenta actuar en tu nombre; el sistema ya trae protección. |
-| **Lovable** | Herramienta que genera aplicaciones a partir de instrucciones y se sincroniza con GitHub. |
+
+| Término            | Significado sencillo                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| **Frontend**       | Lo que el usuario ve y usa en el navegador.                                                  |
+| **Backend**        | La parte "trasera" que guarda datos, aplica reglas y habla con otros servicios.              |
+| **Componente**     | Una pieza reutilizable de la pantalla (un botón, una tarjeta, una tabla).                    |
+| **Ruta**           | Una dirección dentro de la app, como `/clients`.                                             |
+| **Telemetría**     | Medición automática de actividad; aquí, del tiempo que el programador pasa en cada proyecto. |
+| **Heartbeat**      | "Latido": una pequeña señal periódica que dice "sigo trabajando".                            |
+| **Repositorio**    | Carpeta en la nube (por ejemplo, en GitHub) donde vive el código de un proyecto.             |
+| **KPI**            | Indicador clave; una cifra importante para el negocio.                                       |
+| **Pre-factura**    | Borrador de factura antes de emitirla oficialmente.                                          |
+| **Timbrar / CFDI** | En México, validar una factura electrónica ante el SAT para que tenga validez fiscal.        |
+| **Stripe**         | Plataforma para cobrar con tarjeta por internet.                                             |
+| **RFC**            | Registro Federal de Contribuyentes; identificador fiscal en México.                          |
+| **CSRF**           | Tipo de ataque donde otra página intenta actuar en tu nombre; el sistema ya trae protección. |
+| **Lovable**        | Herramienta que genera aplicaciones a partir de instrucciones y se sincroniza con GitHub.    |
+
+
