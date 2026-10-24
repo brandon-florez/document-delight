@@ -2,7 +2,7 @@
   "name": "nexo-itfin",
   "displayName": "Nexo IT·Fin",
   "description": "Mide el tiempo de programación y lo envía al portal Nexo IT·Fin.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "nexo",
   "private": true,
   "engines": {
@@ -23,7 +23,7 @@
       "properties": {
         "nexo.heartbeatUrl": {
           "type": "string",
-          "default": "https://hajwmgmqppxtgbbwaqmo.supabase.co/functions/v1/heartbeat",
+          "default": "https://tamihgvrooapgnwzbwhv.supabase.co/functions/v1/heartbeat",
           "description": "Dirección de la función que recibe la actividad del editor."
         }
       }

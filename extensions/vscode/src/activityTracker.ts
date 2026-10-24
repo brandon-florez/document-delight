@@ -6,7 +6,7 @@ import { TOKEN_SECRET_KEY } from "./token";
 const INTERVAL_MS = 45_000;
 const IDLE_MS = 3 * 60_000;
 const DEFAULT_HEARTBEAT_URL =
-  "https://hajwmgmqppxtgbbwaqmo.supabase.co/functions/v1/heartbeat";
+  "https://tamihgvrooapgnwzbwhv.supabase.co/functions/v1/heartbeat";
 
 type SendResult = {
   status: number;
