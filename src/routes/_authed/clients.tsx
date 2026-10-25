@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Plus } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import { Loader2, Pencil, Plus } from "lucide-react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,7 +23,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +37,7 @@ import {
   useClients,
   useCreateClient,
   useSetClientActive,
+  useUpdateClient,
   type ClientFilters,
 } from "@/lib/api/clients";
 import { PAGE_SIZE } from "@/lib/api/utils";
@@ -68,6 +68,17 @@ const clientSchema = z
   });
 
 type ClientForm = z.input<typeof clientSchema>;
+
+type EditableClient = {
+  id: string;
+  name: string;
+  tax_id: string;
+  currency: "USD" | "MXN";
+  billing_email: string;
+  tax_regime: string | null;
+  fiscal_postal_code: string | null;
+  cfdi_use: string | null;
+};
 
 const EMPTY_FORM: ClientForm = {
   name: "",
@@ -103,51 +114,74 @@ function FieldError({ message }: { message: string | undefined }) {
   return message ? <p className="text-xs text-rosec">{message}</p> : null;
 }
 
-function NewClientDialog() {
-  const [open, setOpen] = useState(false);
+function clientValues(client: EditableClient | null): ClientForm {
+  if (!client) return EMPTY_FORM;
+  return {
+    name: client.name,
+    tax_id: client.tax_id,
+    currency: client.currency,
+    billing_email: client.billing_email,
+    tax_regime: client.tax_regime ?? "",
+    fiscal_postal_code: client.fiscal_postal_code ?? "",
+    cfdi_use: client.cfdi_use ?? "G03",
+  };
+}
+
+function ClientDialog({
+  client,
+  open,
+  onOpenChange,
+}: {
+  client: EditableClient | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const createClient = useCreateClient();
+  const updateClient = useUpdateClient();
   const form = useForm<ClientForm, unknown, z.output<typeof clientSchema>>({
     resolver: zodResolver(clientSchema),
     defaultValues: EMPTY_FORM,
   });
   const currency = form.watch("currency");
   const { errors } = form.formState;
+  const pending = createClient.isPending || updateClient.isPending;
+
+  useEffect(() => {
+    if (open) form.reset(clientValues(client));
+  }, [open, client, form]);
 
   const onSubmit = form.handleSubmit((values) => {
     const isMxn = values.currency === "MXN";
-    createClient.mutate(
-      {
-        name: values.name,
-        tax_id: values.tax_id,
-        currency: values.currency,
-        billing_email: values.billing_email,
-        tax_regime: isMxn ? values.tax_regime : null,
-        fiscal_postal_code: isMxn ? values.fiscal_postal_code : null,
-        cfdi_use: isMxn ? values.cfdi_use : null,
+    const payload = {
+      name: values.name,
+      tax_id: values.tax_id,
+      currency: values.currency,
+      billing_email: values.billing_email,
+      tax_regime: isMxn ? values.tax_regime : null,
+      fiscal_postal_code: isMxn ? values.fiscal_postal_code : null,
+      cfdi_use: isMxn ? values.cfdi_use : null,
+    };
+    const done = {
+      onSuccess: () => {
+        toast.success(client ? `Cliente ${values.name} actualizado.` : `Cliente ${values.name} creado.`);
+        onOpenChange(false);
       },
-      {
-        onSuccess: () => {
-          toast.success(`Cliente ${values.name} creado.`);
-          form.reset(EMPTY_FORM);
-          setOpen(false);
-        },
-        onError: (error) => toast.error(error.message),
-      },
-    );
+      onError: (error: Error) => toast.error(error.message),
+    };
+    if (client) updateClient.mutate({ id: client.id, values: payload }, done);
+    else createClient.mutate(payload, done);
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="clay" size="sm">
-          <Plus />
-          Nuevo Cliente
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo Cliente</DialogTitle>
-          <DialogDescription>Captura los datos requeridos para facturación.</DialogDescription>
+          <DialogTitle>{client ? "Editar cliente" : "Nuevo Cliente"}</DialogTitle>
+          <DialogDescription>
+            {client
+              ? "Las facturas ya emitidas conservan la moneda con la que se crearon."
+              : "Captura los datos requeridos para facturación."}
+          </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4 py-2" onSubmit={(event) => void onSubmit(event)} noValidate>
           <div className="space-y-2">
@@ -224,8 +258,8 @@ function NewClientDialog() {
             </div>
           ) : null}
           <DialogFooter>
-            <Button type="submit" variant="clay" disabled={createClient.isPending}>
-              {createClient.isPending ? <Loader2 className="animate-spin" /> : null}
+            <Button type="submit" variant="clay" disabled={pending}>
+              {pending ? <Loader2 className="animate-spin" /> : null}
               Guardar cliente
             </Button>
           </DialogFooter>
@@ -239,6 +273,8 @@ function ClientsPage() {
   const [search, setSearch] = useState("");
   const [currency, setCurrency] = useState<ClientFilters["currency"]>("all");
   const [page, setPage] = useState(0);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<EditableClient | null>(null);
   const deferredSearch = useDeferredValue(search);
   const clients = useClients({ search: deferredSearch, currency, page });
   const setActive = useSetClientActive();
@@ -248,8 +284,21 @@ function ClientsPage() {
       active="/clients"
       title="Clientes"
       subtitle="Directorio fiscal y moneda de cobro"
-      action={<NewClientDialog />}
+      action={
+        <Button variant="clay" size="sm" onClick={() => setCreating(true)}>
+          <Plus />
+          Nuevo Cliente
+        </Button>
+      }
     >
+      <ClientDialog client={null} open={creating} onOpenChange={setCreating} />
+      <ClientDialog
+        client={editing}
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+      />
       <Panel className="mb-16 md:mb-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionTitle title="Gestión de Clientes" subtitle="Paginación, búsqueda y filtros" />
@@ -315,19 +364,25 @@ function ClientsPage() {
                     </span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={setActive.isPending}
-                      onClick={() =>
-                        setActive.mutate(
-                          { id: client.id, isActive: !client.is_active },
-                          { onError: (error) => toast.error(error.message) },
-                        )
-                      }
-                    >
-                      {client.is_active ? "Pausar" : "Activar"}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setEditing(client)}>
+                        <Pencil />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={setActive.isPending}
+                        onClick={() =>
+                          setActive.mutate(
+                            { id: client.id, isActive: !client.is_active },
+                            { onError: (error) => toast.error(error.message) },
+                          )
+                        }
+                      >
+                        {client.is_active ? "Pausar" : "Activar"}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

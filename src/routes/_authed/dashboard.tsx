@@ -132,7 +132,7 @@ function DashboardPage() {
           className="[animation-delay:60ms]"
         />
         <KpiCard
-          label="Horas no facturadas"
+          label="Tiempo no facturado"
           value={kpis.isLoading ? "…" : formatHours(k?.unbilled_hours)}
           detail={`${k?.unbilled_projects ?? 0} proyecto(s) pendiente(s)`}
           tone="amber"
@@ -152,9 +152,9 @@ function DashboardPage() {
           <div className="flex items-center justify-between gap-3">
             <SectionTitle
               title="Líneas de tiempo por repositorio"
-              subtitle="Horas registradas · semana actual"
+              subtitle="Tiempo registrado · semana actual"
             />
-            <LiveSyncPill />
+            <LiveSyncPill scope="team" />
           </div>
           {repositories.isLoading ? (
             <StateMessage>Cargando horas…</StateMessage>

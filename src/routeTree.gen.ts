@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedClientsRouteImport } from './routes/_authed/clients'
+import { Route as AuthedCompanyRouteImport } from './routes/_authed/company'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedInvoicesRouteImport } from './routes/_authed/invoices'
 import { Route as AuthedMyTimeRouteImport } from './routes/_authed/my-time'
@@ -35,6 +36,11 @@ const LoginRoute = LoginRouteImport.update({
 const AuthedClientsRoute = AuthedClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCompanyRoute = AuthedCompanyRouteImport.update({
+  id: '/company',
+  path: '/company',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/clients': typeof AuthedClientsRoute
+  '/company': typeof AuthedCompanyRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/invoices': typeof AuthedInvoicesRoute
   '/my-time': typeof AuthedMyTimeRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/clients': typeof AuthedClientsRoute
+  '/company': typeof AuthedCompanyRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/invoices': typeof AuthedInvoicesRoute
   '/my-time': typeof AuthedMyTimeRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authed/clients': typeof AuthedClientsRoute
+  '/_authed/company': typeof AuthedCompanyRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/invoices': typeof AuthedInvoicesRoute
   '/_authed/my-time': typeof AuthedMyTimeRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/clients'
+    | '/company'
     | '/dashboard'
     | '/invoices'
     | '/my-time'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/clients'
+    | '/company'
     | '/dashboard'
     | '/invoices'
     | '/my-time'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/login'
     | '/_authed/clients'
+    | '/_authed/company'
     | '/_authed/dashboard'
     | '/_authed/invoices'
     | '/_authed/my-time'
@@ -154,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedClientsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/company': {
+      id: '/_authed/company'
+      path: '/company'
+      fullPath: '/company'
+      preLoaderRoute: typeof AuthedCompanyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedClientsRoute: typeof AuthedClientsRoute
+  AuthedCompanyRoute: typeof AuthedCompanyRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedInvoicesRoute: typeof AuthedInvoicesRoute
   AuthedMyTimeRoute: typeof AuthedMyTimeRoute
@@ -195,6 +215,7 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedClientsRoute: AuthedClientsRoute,
+  AuthedCompanyRoute: AuthedCompanyRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedInvoicesRoute: AuthedInvoicesRoute,
   AuthedMyTimeRoute: AuthedMyTimeRoute,

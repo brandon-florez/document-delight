@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Enums } from "@/integrations/supabase/types";
 
-import { errorMessage } from "./utils";
+import { PAGE_SIZE, errorMessage, sanitizeSearch } from "./utils";
 
 export type InvoiceStatus = Enums<"invoice_status">;
 
@@ -29,6 +29,38 @@ export function useInvoices(status: "all" | InvoiceStatus, limit?: number) {
 }
 
 export type InvoiceWithClient = NonNullable<ReturnType<typeof useInvoices>["data"]>[number];
+
+export function useInvoicePage(filters: {
+  status: "all" | InvoiceStatus;
+  search: string;
+  page: number;
+}) {
+  return useQuery({
+    queryKey: ["invoices", "page", filters],
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const search = sanitizeSearch(filters.search);
+      let query = supabase
+        .from("invoices")
+        .select(search ? "*, clients!inner(name, currency, tax_id, billing_email)" : INVOICE_SELECT, {
+          count: "exact",
+        })
+        .order("year", { ascending: false })
+        .order("month", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (filters.status !== "all") query = query.eq("status", filters.status);
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,tax_id.ilike.%${search}%`, {
+          referencedTable: "clients",
+        });
+      }
+      const from = filters.page * PAGE_SIZE;
+      const { data, count, error } = await query.range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      return { rows: data ?? [], total: count ?? 0 };
+    },
+  });
+}
 
 export function useInvoiceLines(invoiceId: string | undefined) {
   return useQuery({
@@ -87,6 +119,34 @@ export function useMarkInvoicePaid() {
         .eq("id", invoiceId)
         .eq("status", "Sent");
       if (error) throw new Error(await errorMessage(error));
+    },
+    onSuccess: () => invalidateBilling(queryClient),
+  });
+}
+
+/** Returns a Sent or Paid invoice to Draft so the month can take new hours and be issued again. */
+export function useReopenInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update({
+          status: "Draft",
+          paid_at: null,
+          sent_at: null,
+          issuing_started_at: null,
+          external_id: null,
+          payment_url: null,
+          xml_path: null,
+          pdf_path: null,
+        })
+        .eq("id", invoiceId)
+        .in("status", ["Sent", "Paid"])
+        .select("id")
+        .maybeSingle();
+      if (error) throw new Error(await errorMessage(error));
+      if (!data) throw new Error("La factura ya está en borrador.");
     },
     onSuccess: () => invalidateBilling(queryClient),
   });

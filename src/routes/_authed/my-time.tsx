@@ -20,9 +20,17 @@ import {
   useRevokeToken,
 } from "@/lib/api/timeEntries";
 import { useCurrentProfile } from "@/lib/auth";
-import { currentWeek, formatDateTime, formatDay, formatHours, formatTime } from "@/lib/format";
+import {
+  currentWeek,
+  formatDateTime,
+  formatDay,
+  formatHours,
+  formatMinutes,
+  formatTime,
+  formatWorkedTime,
+} from "@/lib/format";
 
-const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
+const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export const Route = createFileRoute("/_authed/my-time")({
   head: () => ({
@@ -51,9 +59,11 @@ function MyTimePage() {
   const entries = useMyTimeEntries(profile?.id);
   const { monday } = currentWeek();
 
-  const weekdays = (week.data ?? []).filter((d) => (d.iso_day ?? 0) <= 5);
-  const weekTotal = (week.data ?? []).reduce((sum, d) => sum + (d.total_hours ?? 0), 0);
-  const maxDay = Math.max(8, ...weekdays.map((d) => d.total_hours ?? 0));
+  const weekdays = [...(week.data ?? [])].sort((a, b) =>
+    (a.entry_date ?? "").localeCompare(b.entry_date ?? ""),
+  );
+  const weekTotal = weekdays.reduce((sum, d) => sum + (d.total_hours ?? 0), 0);
+  const maxDay = Math.max(...weekdays.map((d) => d.total_hours ?? 0), 0);
 
   const mainProject = useMemo(() => {
     const totals = new Map<string, { name: string; repo: string; minutes: number }>();
@@ -86,7 +96,7 @@ function MyTimePage() {
                 Hola, {firstName}
               </p>
               <h2 className="mt-1 text-3xl font-bold tracking-tight">
-                {weekTotal.toFixed(1)} horas registradas
+                {formatWorkedTime(weekTotal)}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                 El registro se alimenta automáticamente desde la actividad del IDE y se asigna por
@@ -121,7 +131,7 @@ function MyTimePage() {
 
       <Panel className="animate-[rise_0.5s_var(--ease)_both] [animation-delay:160ms]">
         <div className="flex items-center justify-between">
-          <SectionTitle title="Actividad por día" subtitle="Lunes a viernes · horas efectivas" />
+          <SectionTitle title="Actividad por día" subtitle="Lunes a domingo · tiempo efectivo" />
           <div className="flex items-center gap-2 rounded-xl border border-line bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground">
             <CalendarDays className="size-4" /> {formatDay(monday)}
           </div>
@@ -143,7 +153,7 @@ function MyTimePage() {
                   <div className="flex h-48 w-full items-end rounded-xl bg-background p-1.5">
                     <div
                       className="w-full origin-bottom rounded-lg bg-clay animate-[grow_0.65s_var(--ease)_both]"
-                      style={{ height: `${(hours / maxDay) * 100}%` }}
+                      style={{ height: maxDay > 0 ? `${(hours / maxDay) * 100}%` : "0%" }}
                     />
                   </div>
                   <span className="font-mono text-[11px] font-medium text-muted-foreground">
@@ -167,7 +177,7 @@ function MyTimePage() {
                 <th className="px-3 py-2.5 font-medium">Hora Inicio</th>
                 <th className="px-3 py-2.5 font-medium">Hora Fin</th>
                 <th className="px-3 py-2.5 text-right font-medium">Actividad</th>
-                <th className="px-3 py-2.5 text-right font-medium">Total Horas</th>
+                <th className="px-3 py-2.5 text-right font-medium">Tiempo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -185,7 +195,7 @@ function MyTimePage() {
                     {entry.activity_score}%
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-xs font-bold">
-                    {formatHours((entry.total_minutes ?? 0) / 60)}
+                    {formatMinutes(entry.total_minutes)}
                   </td>
                 </tr>
               ))}

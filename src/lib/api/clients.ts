@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { TablesInsert } from "@/integrations/supabase/types";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 import { PAGE_SIZE, errorMessage, sanitizeSearch } from "./utils";
 
@@ -29,15 +29,13 @@ export function useClients(filters: ClientFilters) {
   });
 }
 
-export function useClientOptions() {
+export function useClientOptions(includeInactive = false) {
   return useQuery({
-    queryKey: ["clients", "options"],
+    queryKey: ["clients", "options", includeInactive],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, name, currency")
-        .eq("is_active", true)
-        .order("name");
+      let query = supabase.from("clients").select("id, name, currency").order("name");
+      if (!includeInactive) query = query.eq("is_active", true);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -52,6 +50,21 @@ export function useCreateClient() {
       if (error) throw new Error(await errorMessage(error, "Ya existe un cliente con ese RFC."));
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+}
+
+export function useUpdateClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: TablesUpdate<"clients"> }) => {
+      const { error } = await supabase.from("clients").update(values).eq("id", id);
+      if (error) throw new Error(await errorMessage(error, "Ya existe un cliente con ese RFC."));
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["clients"] });
+      void queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 

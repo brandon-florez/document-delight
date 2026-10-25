@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  Building2,
   Clock3,
   FileText,
   FolderGit2,
@@ -14,7 +15,9 @@ import {
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { liveStatusLabel, useLiveActivity } from "@/lib/api/telemetry";
 import { canAccess, homeForRole, signOut, useCurrentProfile, type PortalPath } from "@/lib/auth";
+import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -38,6 +41,7 @@ const navItems: NavItem[] = [
   { label: "Clientes", to: "/clients", icon: UsersRound },
   { label: "Proyectos", to: "/projects", icon: FolderGit2 },
   { label: "Facturación", to: "/invoices", icon: FileText },
+  { label: "Emisor", to: "/company", icon: Building2 },
 ];
 
 export function PortalShell({
@@ -54,6 +58,12 @@ export function PortalShell({
   action?: ReactNode;
 }) {
   const { data: profile } = useCurrentProfile();
+  const teamTelemetry = profile?.role !== "Developer";
+  const live = useLiveActivity(teamTelemetry ? "team" : "self");
+  const liveLabel = liveStatusLabel(live.status, live.sessions, teamTelemetry);
+  const liveDetail = live.sessions
+    .map((session) => `${session.userName} · ${session.projectName} · ${formatTime(session.endTime)}`)
+    .join("\n");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const visibleItems = profile ? navItems.filter((item) => canAccess(profile.role, item.to)) : [];
@@ -135,10 +145,21 @@ export function PortalShell({
               <p className="font-mono text-[11px] text-muted-foreground">{subtitle}</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 sm:flex">
-                <span className="size-1.5 rounded-full bg-accent" />
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  Telemetría en vivo
+              <div
+                className="flex max-w-52 items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2"
+                title={liveDetail || liveLabel}
+              >
+                <span
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    live.status === "live" && "animate-pulse bg-accent",
+                    live.status === "idle" && "bg-muted-foreground/40",
+                    live.status === "offline" && "bg-rosec",
+                    live.status === "loading" && "bg-muted-foreground/40",
+                  )}
+                />
+                <span className="truncate font-mono text-[11px] text-muted-foreground">
+                  {liveLabel}
                 </span>
               </div>
               {action}
@@ -218,11 +239,31 @@ export function StatusDot({ tone = "accent" }: { tone?: "accent" | "amber" | "ro
   return <span className={cn("size-1.5 rounded-full", toneClass)} />;
 }
 
-export function LiveSyncPill() {
+export function LiveSyncPill({ scope = "self" }: { scope?: "self" | "team" }) {
+  const live = useLiveActivity(scope);
+  const liveNow = live.status === "live";
+  const label =
+    live.status === "loading"
+      ? "Telemetría"
+      : live.status === "offline"
+        ? "Sin conexión"
+        : liveNow
+          ? scope === "team" && live.sessions.length > 1
+            ? `${live.sessions.length} en vivo`
+            : "En vivo"
+          : "Sin actividad";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 font-mono text-[10px] font-medium text-accent">
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] font-medium",
+        liveNow
+          ? "bg-accent-soft text-accent"
+          : "bg-background text-muted-foreground ring-1 ring-line",
+      )}
+      title={live.sessions.map((session) => `${session.userName} · ${session.projectName}`).join(", ")}
+    >
       <Wifi className="size-3" />
-      Auto-sync
+      {label}
     </span>
   );
 }

@@ -7,12 +7,20 @@ import {
   FileCode2,
   FileText,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { toast } from "sonner";
 
 import { InvoicePreview, StatusBadge } from "@/components/portal/InvoicePreview";
-import { Panel, PortalShell, SectionTitle, StateMessage } from "@/components/portal/PortalShell";
+import {
+  Pagination,
+  Panel,
+  PortalShell,
+  SearchField,
+  SectionTitle,
+  StateMessage,
+} from "@/components/portal/PortalShell";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,11 +42,14 @@ import {
 import {
   openInvoiceFile,
   useGenerateInvoices,
-  useInvoices,
+  useInvoicePage,
   useIssueInvoice,
   useMarkInvoicePaid,
+  useReopenInvoice,
   type InvoiceStatus,
+  type InvoiceWithClient,
 } from "@/lib/api/invoices";
+import { PAGE_SIZE } from "@/lib/api/utils";
 import { currentPeriod, formatMoney, invoiceLabel, monthLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -152,14 +163,61 @@ function GenerateClosingDialog() {
   );
 }
 
+function ReopenInvoiceButton({ invoice }: { invoice: InvoiceWithClient }) {
+  const [open, setOpen] = useState(false);
+  const reopen = useReopenInvoice();
+
+  function handleReopen() {
+    reopen.mutate(invoice.id, {
+      onSuccess: () => {
+        toast.success("Factura reabierta. Genera el cierre del mes para incluir las horas nuevas.");
+        setOpen(false);
+      },
+      onError: (error) => toast.error(error.message),
+    });
+  }
+
+  if (invoice.status === "Draft") return null;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <RotateCcw />
+          Reabrir
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reabrir factura</DialogTitle>
+          <DialogDescription>
+            Vuelve a borrador. Se quitan el timbre, el enlace de pago y la marca de pagada. Después
+            puedes generar el cierre para sumar horas nuevas y timbrar o cobrar otra vez.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="clay" disabled={reopen.isPending} onClick={handleReopen}>
+            {reopen.isPending ? <Loader2 className="animate-spin" /> : null}
+            Reabrir
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function InvoicesPage() {
   const [status, setStatus] = useState<"all" | InvoiceStatus>("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const invoices = useInvoices(status);
+  const deferredSearch = useDeferredValue(search);
+  const invoices = useInvoicePage({ status, search: deferredSearch, page });
+  const rows = invoices.data?.rows ?? [];
   const issue = useIssueInvoice();
   const markPaid = useMarkInvoicePaid();
 
-  const selected = invoices.data?.find((i) => i.id === selectedId) ?? invoices.data?.[0];
+  const selected = rows.find((i) => i.id === selectedId) ?? rows[0];
 
   function handleIssue() {
     if (!selected) return;
@@ -202,7 +260,10 @@ function InvoicesPage() {
                 <button
                   key={tab.value}
                   type="button"
-                  onClick={() => setStatus(tab.value)}
+                  onClick={() => {
+                    setStatus(tab.value);
+                    setPage(0);
+                  }}
                   className={cn(
                     "rounded-lg px-2 py-1",
                     status === tab.value ? "bg-clay-soft text-clay" : "text-muted-foreground",
@@ -214,12 +275,23 @@ function InvoicesPage() {
             </div>
           </div>
 
+          <div className="mt-4">
+            <SearchField
+              placeholder="Buscar cliente o RFC"
+              value={search}
+              onChange={(value) => {
+                setSearch(value);
+                setPage(0);
+              }}
+            />
+          </div>
+
           <div className="mt-4 space-y-2.5">
             {invoices.isLoading ? <StateMessage>Cargando facturas…</StateMessage> : null}
-            {invoices.data?.length === 0 ? (
-              <StateMessage>No hay facturas en este estado.</StateMessage>
+            {rows.length === 0 ? (
+              <StateMessage>No hay facturas que coincidan.</StateMessage>
             ) : null}
-            {invoices.data?.map((invoice) => (
+            {rows.map((invoice) => (
               <Button
                 key={invoice.id}
                 type="button"
@@ -249,6 +321,12 @@ function InvoicesPage() {
               </Button>
             ))}
           </div>
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={invoices.data?.total ?? 0}
+            onPageChange={setPage}
+          />
         </Panel>
 
         <Panel className="mb-16 md:mb-0">
@@ -288,6 +366,7 @@ function InvoicesPage() {
                       </a>
                     </Button>
                   ) : null}
+                  <ReopenInvoiceButton invoice={selected} />
                   {selected.status === "Sent" ? (
                     <Button
                       variant="outline"

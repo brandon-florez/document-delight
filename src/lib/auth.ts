@@ -6,7 +6,13 @@ import type { Enums, Tables } from "@/integrations/supabase/types";
 export type Role = Enums<"user_role">;
 export type Profile = Tables<"profiles">;
 
-export type PortalPath = "/dashboard" | "/my-time" | "/clients" | "/projects" | "/invoices";
+export type PortalPath =
+  | "/dashboard"
+  | "/my-time"
+  | "/clients"
+  | "/projects"
+  | "/invoices"
+  | "/company";
 
 export const ROUTE_ROLES: Record<PortalPath, Role[]> = {
   "/dashboard": ["Admin", "Finance"],
@@ -14,6 +20,7 @@ export const ROUTE_ROLES: Record<PortalPath, Role[]> = {
   "/clients": ["Admin", "Finance"],
   "/projects": ["Admin", "Finance"],
   "/invoices": ["Admin", "Finance"],
+  "/company": ["Admin"],
 };
 
 export function homeForRole(role: Role): PortalPath {

@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Enums, TablesInsert } from "@/integrations/supabase/types";
+import type { Enums, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { currentPeriod, monthRange } from "@/lib/format";
 
 import { PAGE_SIZE, errorMessage, sanitizeSearch } from "./utils";
@@ -69,6 +69,25 @@ export function useCreateProject() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
+  });
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: TablesUpdate<"projects"> }) => {
+      const { error } = await supabase.from("projects").update(values).eq("id", id);
+      if (error) {
+        throw new Error(
+          await errorMessage(error, "Ese repositorio ya está asignado a otro proyecto."),
+        );
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["projects"] });
+      void queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 

@@ -20,6 +20,11 @@ export function startActivityTracker(context: vscode.ExtensionContext): vscode.D
 
   let typedSinceSend = false;
   let lastTypingAt = 0;
+  // First keystroke of the current block. The portal opens a block at the
+  // timestamp it receives, so the opening notice must carry this moment.
+  let blockStartedAt: number | null = null;
+  let blockAnchored = false;
+  let anchoredRepo: string | null = null;
   let sending = false;
   let lastPopup = "";
   const originCache = new Map<string, { url: string | undefined; at: number }>();
@@ -45,8 +50,15 @@ export function startActivityTracker(context: vscode.ExtensionContext): vscode.D
     if (event.document.uri.scheme !== "file" || event.contentChanges.length === 0) {
       return;
     }
+    const now = Date.now();
+    const gap = blockStartedAt === null || now - lastTypingAt > IDLE_MS;
+    if (gap) {
+      blockStartedAt = now;
+      blockAnchored = false;
+      anchoredRepo = null;
+    }
     typedSinceSend = true;
-    lastTypingAt = Date.now();
+    lastTypingAt = now;
   };
 
   const tick = () => {
@@ -63,6 +75,11 @@ export function startActivityTracker(context: vscode.ExtensionContext): vscode.D
     }
     if (!typedSinceSend || Date.now() - lastTypingAt > IDLE_MS) {
       typedSinceSend = false;
+      if (Date.now() - lastTypingAt > IDLE_MS) {
+        blockStartedAt = null;
+        blockAnchored = false;
+        anchoredRepo = null;
+      }
       setStatus("Nexo en espera", "Se enviará actividad cuando escribas en un archivo.");
       return;
     }
@@ -89,9 +106,25 @@ export function startActivityTracker(context: vscode.ExtensionContext): vscode.D
     }
 
     const typedAtSend = lastTypingAt;
+    const startedAt = blockStartedAt ?? typedAtSend;
+    const opening = !blockAnchored || anchoredRepo !== repositoryUrl;
     sending = true;
     try {
-      const result = await postHeartbeat(token, repositoryUrl);
+      if (opening && typedAtSend - startedAt >= 1000) {
+        const opened = await postHeartbeat(token, repositoryUrl, startedAt);
+        if (opened.status !== 204) {
+          applyResult(opened, typedAtSend);
+          return;
+        }
+        blockAnchored = true;
+        anchoredRepo = repositoryUrl;
+      }
+      const result = await postHeartbeat(token, repositoryUrl, Date.now());
+      if (result.status === 204) {
+        blockAnchored = true;
+        anchoredRepo = repositoryUrl;
+        if (opening) blockStartedAt = startedAt;
+      }
       applyResult(result, typedAtSend);
     } catch {
       setStatus("Nexo sin conexión", "No se pudo contactar al portal. Se reintentará en el siguiente ciclo.");
@@ -170,7 +203,11 @@ function heartbeatUrl(): string {
   return configured || DEFAULT_HEARTBEAT_URL;
 }
 
-async function postHeartbeat(token: string, repositoryUrl: string): Promise<SendResult> {
+async function postHeartbeat(
+  token: string,
+  repositoryUrl: string,
+  timestamp: number,
+): Promise<SendResult> {
   const response = await fetch(heartbeatUrl(), {
     method: "POST",
     headers: {
@@ -180,7 +217,7 @@ async function postHeartbeat(token: string, repositoryUrl: string): Promise<Send
     body: JSON.stringify({
       userId: null,
       repositoryUrl,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(timestamp).toISOString(),
       isTyping: true,
     }),
   });

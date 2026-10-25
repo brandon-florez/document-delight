@@ -69,8 +69,27 @@ export function formatMoney(amount: number | null | undefined, currency: "USD" |
   return `${formatted} ${currency}`;
 }
 
+/** Worked time for the portal. Short sessions stay visible as minutes. */
+export function formatMinutes(minutes: number | null | undefined) {
+  const total = Math.max(0, Math.round(minutes ?? 0));
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return `${hours} h`;
+  return `${hours} h ${mins} min`;
+}
+
 export function formatHours(hours: number | null | undefined) {
-  return `${(hours ?? 0).toFixed(1)} h`;
+  return formatMinutes((hours ?? 0) * 60);
+}
+
+/** "10 min registrados", "2 h registradas" o "1 h 8 min registrados". */
+export function formatWorkedTime(hours: number | null | undefined) {
+  const total = Math.max(0, Math.round((hours ?? 0) * 60));
+  const wholeHours = Math.floor(total / 60);
+  const mins = total % 60;
+  const agreement = wholeHours > 0 && mins === 0 ? "registradas" : "registrados";
+  return `${formatMinutes(total)} ${agreement}`;
 }
 
 export function formatDay(day: string) {
