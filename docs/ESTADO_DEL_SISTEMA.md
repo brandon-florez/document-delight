@@ -1,7 +1,7 @@
 # Estado actual del sistema — Nexo IT·Fin
 
 > Documento de diagnóstico del repositorio `document-delight`.
-> Última actualización: 24 de octubre de 2026 (primera versión: 27 de septiembre de 2026).
+> Última actualización: 24 de octubre de 2026, cierre funcional (primera versión: 27 de septiembre de 2026).
 > Escrito en lenguaje sencillo; al final hay un pequeño glosario con los términos técnicos que aparecen.
 
 ---
@@ -20,9 +20,9 @@
 - Hay **inicio de sesión real** con correo y contraseña, y cada rol (Developer, Admin, Finance) solo ve lo que le corresponde.
 - Una **extensión para el editor de código** (VS Code / Cursor) mide la actividad del programador y la envía al portal.
 - El portal **calcula las horas**, genera los **borradores de factura** del mes y permite **timbrar** (pesos, ante el SAT vía Facturama) o **cobrar** (dólares, con un enlace de pago de Stripe).
-- Ya se probó con éxito: registro de actividad desde el editor, generación de facturas, timbrado de una factura en MXN y creación de un enlace de pago en USD.
+- Ya se probó con éxito: registro desde la primera tecla, minutos en Mi tiempo, cierre del mes, timbrado MXN con más de un concepto, cobro USD y paso automático a Pagada al pagar en Stripe, edición de clientes y proyectos, búsqueda de facturas, datos del emisor y el indicador de actividad en vivo.
 
-Lo que queda pendiente son detalles de acabado y algunas pantallas opcionales (ver secciones 9 y 10).
+El flujo de negocio está cerrado. Lo que queda son detalles de acabado (sección 10) y dos tareas opcionales de entrega: quitar archivos temporales del repositorio y empaquetar la extensión para instalarla sin el modo de desarrollo (sección 11).
 
 El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones a partir de instrucciones escritas) y se mantiene sincronizado con ella a través de GitHub. Trabajan en él dos personas: una en la **plataforma y el cobro**, otra en la **extensión de telemetría** (ver `docs/actividades_por_persona.md`).
 
@@ -34,11 +34,12 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 | --- | --- | --- | --- |
 | Inicio | `/` | Todos | Redirige al login. |
 | Iniciar sesión | `/login` | Todos | Valida correo y contraseña contra Supabase y lleva a cada quien a su pantalla. |
-| Dashboard ejecutivo | `/dashboard` | Admin, Finance | Indicadores reales, horas por repositorio, tiempo sin facturar, generar pre-facturas y exportar a CSV. |
-| Mi tiempo | `/my-time` | Todos | Horas reales de la semana, gráfico por día, bitácora y tokens para la extensión del editor. |
-| Clientes | `/clients` | Admin, Finance | Buscar, filtrar por moneda, paginar, crear clientes (con datos fiscales) y pausarlos/activarlos. |
-| Proyectos | `/projects` | Admin, Finance | Buscar, paginar, crear proyectos con su repositorio y tarifa, y activarlos/desactivarlos. |
-| Facturación | `/invoices` | Admin, Finance | Generar cierre mensual, filtrar por estado, ver la factura con sus conceptos, timbrar/cobrar, descargar XML/PDF, abrir el enlace de pago y marcar como pagada. |
+| Dashboard ejecutivo | `/dashboard` | Admin, Finance | Indicadores reales, horas por repositorio, tiempo sin facturar, generar pre-facturas, exportar a CSV e indicador de quién está trabajando. |
+| Mi tiempo | `/my-time` | Todos | Minutos de la semana, gráfico de lunes a domingo, bitácora, tokens del editor e indicador de la propia actividad. |
+| Clientes | `/clients` | Admin, Finance | Buscar, filtrar por moneda, paginar, crear, editar y pausar o activar clientes. |
+| Proyectos | `/projects` | Admin, Finance | Buscar, paginar, crear, editar y activar o desactivar proyectos. |
+| Facturación | `/invoices` | Admin, Finance | Buscar, paginar, generar cierre, ver conceptos, timbrar o cobrar, reabrir, descargar XML/PDF, abrir el enlace de pago y marcar como pagada. |
+| Emisor | `/company` | Admin | Leer y guardar razón social, RFC, régimen fiscal y código postal de quien emite las facturas. |
 
 ### Detalle de cada pantalla
 
@@ -53,16 +54,18 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 
 - Cuatro tarjetas con cifras **calculadas por la base de datos**: facturación en USD, facturación en MXN, horas no facturadas y clientes activos.
 - Barras con las horas de la semana por repositorio.
-- Lista del **tiempo no facturado** del mes, por proyecto, con el botón **Generar Pre-Facturas** (crea o actualiza los borradores del mes).
+- Lista del **tiempo no facturado** del mes, por proyecto, con el botón **Generar Pre-Facturas** (crea o actualiza los borradores del mes). Si la factura de ese cliente y ese mes ya salió de Borrador, el cierre no la modifica y el aviso dice que no hay tiempo pendiente.
 - Botón **Exportar**: descarga un archivo CSV con el tiempo no facturado del mes.
+- Indicador **En vivo** cuando algún programador escribió en los últimos 3 minutos; si no, **Sin actividad**. Se actualiza cada 15 segundos.
 - Tabla de las últimas facturas y vista previa de una de ellas.
 
 **Mi tiempo (**`/my-time`**)**
 
-- Saluda al usuario real que inició sesión y muestra sus horas de la semana.
+- Saluda al usuario real que inició sesión y muestra el tiempo de la semana en minutos (`10 min registrados`, `2 h registradas` o una mezcla, que usa «registrados»).
 - Muestra su **proyecto principal** de la semana (el que más tiempo acumula) y su repositorio.
-- Gráfico de lunes a viernes con las horas reales de cada día.
-- "Time Log": bitácora de solo lectura con fecha, proyecto, hora de inicio, hora de fin y total. Se alimenta sola desde la extensión del editor.
+- Gráfico de **lunes a domingo**. La escala la marca el día con más tiempo de esa semana, así las sesiones cortas se ven.
+- "Time Log": bitácora de solo lectura con fecha, proyecto, hora de inicio, hora de fin, actividad y tiempo. Las horas se muestran en **Ciudad de México**. Se alimenta sola desde la extensión y se refresca cuando llega una señal nueva.
+- Junto al saludo, el indicador dice **En vivo** solo si esa misma cuenta escribió en los últimos 3 minutos.
 - **Tokens del IDE**: el programador genera aquí un token (empieza con `nxo_`, se muestra una sola vez) para conectar su editor. Puede ver sus tokens y revocarlos.
 
 **Clientes (**`/clients`**)**
@@ -71,6 +74,7 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 - **Buscador** (por nombre o RFC), **filtro por moneda** y **paginación** de 10 en 10, todos funcionando.
 - Botón **Nuevo Cliente** con validación de campos (por ejemplo, formato del RFC y del correo).
   - Si la moneda es **MXN**, pide además los datos fiscales que exige el SAT: **régimen fiscal** (3 dígitos), **código postal** (5 dígitos) y **uso de CFDI** (por ejemplo `G03`).
+- Botón **Editar** para corregir nombre, RFC, moneda, correo y, en MXN, régimen, código postal y uso de CFDI. Un RFC repetido se rechaza.
 - Botón para **pausar o activar** un cliente.
 
 **Proyectos (**`/projects`**)**
@@ -79,18 +83,26 @@ El proyecto fue generado con **Lovable** (una herramienta que crea aplicaciones 
 - **Buscador** y **paginación** funcionando.
 - Botón **Nuevo Proyecto** con validación (tarifa mayor que cero, cliente obligatorio, URL del repositorio).
 - La **URL del repositorio** es la pieza clave: es lo que enlaza el tiempo medido por la extensión con el proyecto correcto. El sistema entiende la misma URL escrita de varias formas (`https://…`, `git@github.com:…`, con o sin `.git`) y no permite dos proyectos con el mismo repositorio.
-- Botón para **activar o desactivar** un proyecto. El tiempo de proyectos inactivos no se registra.
+- Botón **Editar** para corregir nombre, cliente, URL y tarifa. Las facturas ya emitidas conservan la tarifa con la que se cerraron.
+- Botón para **activar o desactivar** un proyecto. Desactivar deja de aceptar tiempo nuevo, pero **no borra** el proyecto ni libera la URL: el repositorio sigue siendo único. No hay botón de eliminar, porque el tiempo y las facturas dependen de ese proyecto.
 
 **Facturación (**`/invoices`**)**
 
-- A la izquierda, la lista de facturas con pestañas para filtrar por estado: **Todas, Borrador, Enviadas y Pagadas**.
+- A la izquierda, la lista de facturas con **buscador** (nombre del cliente o RFC), **paginación** de 10 en 10 y pestañas por estado: **Todas, Borrador, Enviadas y Pagadas**. La lista muestra el cliente; el proyecto aparece como concepto dentro de la factura.
 - A la derecha, la vista previa de la factura elegida con sus **conceptos reales** (proyecto, horas, tarifa y subtotal), subtotal, impuestos y total.
 - **Generar Cierre**: elige mes y año, agrupa el tiempo sin facturar por cliente, lo multiplica por la tarifa de cada proyecto y crea o actualiza los borradores.
 - **Timbrar / Cobrar** (solo en borradores):
   - **Cliente en MXN**: timbra la factura ante el SAT (CFDI 4.0) a través de **Facturama**. Guarda el **XML** y el **PDF** oficiales, que se pueden descargar con sus botones.
   - **Cliente en USD**: crea un **enlace de pago de Stripe**. El botón **Enlace de pago** lo abre.
   - En ambos casos la factura pasa a **Enviada**.
-- **Marcar pagada** (en facturas enviadas): cambio manual a **Pagada**. Además, cuando el cliente paga el enlace de Stripe, la factura pasa a Pagada sola (ver sección 4).
+- **Marcar pagada** (en facturas enviadas): cambio manual a **Pagada**. Cuando el cliente paga el enlace de Stripe, la factura pasa a Pagada sola. Esto ya se comprobó con un pago de prueba.
+- **Reabrir** (en enviadas o pagadas): vuelve la factura a Borrador y limpia el folio, el enlace de pago, el XML y el PDF, para poder generar de nuevo el cierre y timbrar otra vez. Sirve para pruebas. En una factura ya timbrada ante el SAT, reabrir y timbrar de nuevo produce otro CFDI.
+
+**Emisor (`/company`)**
+
+- Solo **Admin**. Finance y Developer no entran; el Developer que escribe la dirección a mano regresa a Mi tiempo.
+- Formulario de razón social, RFC, régimen fiscal (3 dígitos) y código postal (5 dígitos).
+- Si todavía no hay fila, el primer guardado la crea. Esos datos son los que usa el timbrado.
 
 ### Elementos comunes a las pantallas internas
 
@@ -98,6 +110,7 @@ Todas las pantallas (menos el login) comparten un mismo "marco":
 
 - **Menú lateral** (en computadora) o **barra inferior** (en celular). Solo muestra las secciones que el rol del usuario puede abrir.
 - **Usuario real** en la esquina: nombre, iniciales, rol y correo de quien inició sesión.
+- En la cabecera, el estado de la telemetría. Admin y Finance ven al equipo (`En vivo · nombre` o `N en vivo`). El Developer ve su propio proyecto. Si la consulta falla, dice **Sin conexión**.
 - **Protección por rol**: si un Developer escribe a mano `/invoices` u otra dirección que no le corresponde, el sistema lo regresa a Mi tiempo. Si no hay sesión, lo manda al login.
 - Botón para **cerrar sesión** de verdad (borra la sesión y vuelve al login).
 - **Avisos emergentes** (esquina superior derecha) para confirmar acciones o mostrar errores, por ejemplo "Factura marcada como pagada".
@@ -211,10 +224,12 @@ Vive en `extensions/vscode/` y funciona en **VS Code** y **Cursor**.
 
 **Qué hace:**
 
-- Cada **45 segundos**, si el programador escribió algo desde el envío anterior, manda una señal ("heartbeat") a la función `heartbeat` con la URL del repositorio abierto (la toma de `git remote origin`).
+- Cada **45 segundos**, si el programador escribió algo desde el envío anterior y la ventana está activa, manda una señal ("heartbeat") con la URL del repositorio abierto (la toma de `git remote origin`).
+- El **primer tecleo** de un bloque nuevo marca la hora de inicio. La señal puede salir hasta 45 segundos después, pero el bloque empieza en esa primera tecla, no en el momento del envío.
 - **No envía nada** si la ventana del editor no está activa o si pasaron más de **3 minutos sin escribir**, para no inflar el tiempo.
-- Muestra su estado en la barra inferior del editor: *en espera*, *sincronizado*, *sin token*, *repo no registrado*, *token rechazado*, *sin conexión*, etc.
-- La dirección del servidor se puede cambiar con el ajuste `nexo.heartbeatUrl`.
+- La barra dice **Nexo sincronizado** solo cuando el portal acepta la señal. Al empezar a teclear puede seguir en **en espera** hasta el siguiente ciclo. Si después no hay teclas nuevas, vuelve a **en espera** aunque esos minutos ya estén guardados.
+- Otros estados: *en pausa*, *sin token*, *repo no registrado*, *token rechazado*, *sin conexión*.
+- La dirección predeterminada apunta al Supabase compartido del equipo. Se puede cambiar con el ajuste `nexo.heartbeatUrl`.
 
 **Para probarla en desarrollo:** abrir la carpeta `extensions/vscode`, ejecutar `npm install` y `npm run compile`, y pulsar **F5** ("Run Extension").
 
@@ -282,7 +297,7 @@ document-delight/
 │   │   ├── index.tsx             "/" → redirige al login.
 │   │   ├── login.tsx             "/login"
 │   │   ├── _authed.tsx           Capa que exige sesión y revisa el rol.
-│   │   └── _authed/              dashboard, my-time, clients, projects, invoices.
+│   │   └── _authed/              dashboard, my-time, clients, projects, invoices, company.
 │   ├── components/
 │   │   ├── portal/PortalShell.tsx     Marco del portal y piezas propias.
 │   │   ├── portal/InvoicePreview.tsx  Vista previa de factura y etiqueta de estado.
@@ -291,7 +306,7 @@ document-delight/
 │   │   ├── client.ts             Conexión con Supabase (con aviso si falta configuración).
 │   │   └── types.ts              Descripción de las tablas para TypeScript.
 │   ├── lib/
-│   │   ├── api/                  Consultas y acciones por tema (clientes, proyectos, tiempo, facturas, dashboard).
+│   │   ├── api/                  Consultas y acciones (clientes, proyectos, tiempo, facturas, dashboard, emisor, telemetría).
 │   │   ├── auth.ts               Sesión, roles y permisos por página.
 │   │   ├── format.ts             Formato de dinero, horas, fechas (zona horaria de Ciudad de México) y folios.
 │   │   └── …                     Utilidades y manejo de errores de la plantilla.
@@ -311,8 +326,8 @@ document-delight/
 | Pieza | Qué hace |
 | --- | --- |
 | `PortalShell` | Marco de todas las páginas internas: menú filtrado por rol, usuario real, cabecera y cerrar sesión. |
-| `KpiCard`, `Panel`, `SectionTitle`, `StatusDot`, `LiveSyncPill` | Tarjetas, cajas, títulos e indicadores visuales. |
-| `SearchField` | Buscador que filtra de verdad (Clientes y Proyectos). |
+| `KpiCard`, `Panel`, `SectionTitle`, `StatusDot`, `LiveSyncPill` | Tarjetas, cajas, títulos e indicadores. `LiveSyncPill` dice En vivo o Sin actividad según los bloques de los últimos 3 minutos. |
+| `SearchField` | Buscador que filtra de verdad (Clientes, Proyectos y Facturación). |
 | `Pagination` | Controles "anterior / siguiente" con "Mostrando X–Y de Z". |
 | `StateMessage` | Mensaje de "cargando", "sin resultados" o error. |
 | `InvoicePreview` | Documento de la factura con sus conceptos reales, subtotal, IVA y total. |
@@ -331,11 +346,13 @@ document-delight/
 
 | Archivo | Funciones |
 | --- | --- |
-| `clients.ts` | Listar con búsqueda/filtro/paginación, opciones para selectores, crear, pausar/activar. |
-| `projects.ts` | Listar, horas del mes por proyecto, crear, activar/desactivar. |
+| `clients.ts` | Listar con búsqueda/filtro/paginación, opciones para selectores, crear, editar, pausar/activar. |
+| `projects.ts` | Listar, horas del mes por proyecto, crear, editar, activar/desactivar. |
 | `timeEntries.ts` | Semana del usuario, bitácora, tokens (listar, crear, revocar). |
-| `invoices.ts` | Listar por estado, conceptos, generar cierre, timbrar/cobrar, marcar pagada, abrir XML/PDF. |
+| `invoices.ts` | Listar por estado con búsqueda y paginación, conceptos, generar cierre, timbrar/cobrar, reabrir, marcar pagada, abrir XML/PDF. |
 | `dashboard.ts` | Indicadores, tiempo sin facturar del mes y horas por repositorio. |
+| `company.ts` | Leer y guardar la fila única de `company_settings`. |
+| `telemetry.ts` | Consulta cada 15 segundos los bloques que terminaron hace menos de 3 minutos y refresca Mi tiempo y el dashboard cuando llega uno nuevo. |
 
 ### Componentes genéricos (`src/components/ui/`)
 
@@ -396,20 +413,23 @@ Detalles detectados en el primer análisis que **siguen pendientes**:
 
 ---
 
-## 11. ¿Qué falta para terminar el sistema?
+## 11. Cierre y lo que queda fuera del flujo
 
-Pendientes del primer análisis que **aún no están completos**:
+El sistema ya cubre el recorrido de negocio. Esto quedó hecho y probado:
 
-1. **Editar clientes y proyectos.** Hoy se pueden crear y pausar/activar, pero no hay forma de **corregir sus datos** desde el portal (por ejemplo, un RFC o un régimen fiscal mal capturado). Hay que hacerlo directamente en Supabase.
-2. **Búsqueda y exportación en el resto de pantallas.** Clientes y Proyectos ya tienen buscador y paginación, y el Dashboard exporta a CSV el tiempo no facturado. Faltan buscador y paginación en **Facturación**, y exportar facturas o bitácoras de tiempo.
+1. **Editar clientes y proyectos** desde el portal.
+2. **Buscador y paginación en Facturación.** El Dashboard sigue exportando a CSV el tiempo no facturado. No hay exportación de facturas ni de la bitácora; no hace falta para operar.
+3. **Pantalla del emisor**, solo Admin.
+4. **Un solo Supabase para el equipo.** La extensión usa por defecto el proyecto compartido.
+5. **Pago automático con Stripe.** Un pago de prueba pasó la factura a Pagada sin intervención manual.
+6. **Minutos en vez de «0.0 h»**, gráfico de lunes a domingo y conteo desde la primera tecla.
+7. **Telemetría en vivo** en la cabecera, en Mi tiempo y en el dashboard.
+8. **Reabrir** una factura enviada o pagada para repetir el cierre y el timbrado.
 
-Pendientes nuevos detectados en esta revisión:
+Queda fuera de ese recorrido:
 
-3. **Pantalla de datos del emisor (solo Admin).** La tabla `company_settings` y sus permisos ya existen, pero la fila se carga a mano. Falta la pantalla para leer y editar RFC, razón social, régimen y código postal.
-4. **Proyecto de Supabase común para el equipo.** La extensión trae como dirección predeterminada el proyecto de Supabase de la otra persona del equipo. Hay que acordar un solo proyecto y actualizar ese valor en `extensions/vscode/package.json` y `src/activityTracker.ts`.
-5. **Confirmar el pago automático con Stripe.** El webhook ya está programado; falta comprobar que, al pagar un enlace de prueba, la factura pase sola a Pagada (requiere que el webhook esté dado de alta en el dashboard de Stripe con su `whsec_…`).
-6. **Limpieza del repositorio.** La carpeta `supabase/.temp/` (archivos internos del CLI de Supabase) se subió a Git; conviene quitarla y agregarla al `.gitignore`.
-7. **Publicar la extensión.** Hoy se ejecuta en modo desarrollo (F5). Para que la usen otros programadores hay que empaquetarla (archivo `.vsix`) o publicarla.
+1. **Limpieza del repositorio.** La carpeta `supabase/.temp/` (archivos internos del CLI de Supabase) sigue en Git. Conviene quitarla y agregarla al `.gitignore`.
+2. **Empaquetar la extensión.** Hoy se ejecuta en modo desarrollo (F5). Para que la usen otros programadores sin abrir el código, hay que generar el archivo `.vsix` o publicarla.
 
 ---
 
